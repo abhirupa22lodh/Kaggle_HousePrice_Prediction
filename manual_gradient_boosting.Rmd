@@ -1,0 +1,141 @@
+---
+title: "Gradient Boosted Model Fitting"
+author: "Abhirupa Lodh"
+date: "January 2, 2018"
+output: word_document
+---
+
+```{r}
+read.csv("C:/Users/SAROJ/Desktop/House Price/clean_data.csv")->train
+train = train[,2:59]
+
+```
+
+```{r}
+read.csv("C:/Users/SAROJ/Desktop/House Price/test_massaged.csv") -> test
+```
+
+```{r}
+model1 = randomForest(SalePrice~.,data=train)
+```
+
+```{r}
+#Data taken from the previous program
+pred = predict(model1,test_massaged)
+```
+
+
+```{r}
+rep(mean(pred),length(pred))->f0
+```
+
+```{r}
+res0 = pred - f0
+
+```
+
+```{r}
+h0_data = data.frame(test_massaged,res0)
+```
+
+```{r}
+model2 = randomForest(res0~.,data=h0_data)
+
+```
+
+```{r}
+h0 = predict(model2,test_massaged)
+```
+
+```{r}
+f1 = f0+h0
+```
+
+```{r}
+res1 = pred - f1
+```
+
+```{r}
+h1_data = data.frame(test_massaged,res1)
+```
+
+```{r}
+model2 = randomForest(res1~.,data=h1_data)
+
+```
+
+```{r}
+h1 = predict(model2,test_massaged)
+```
+
+```{r}
+f2 = f1+h1
+```
+
+```{r}
+read.csv("C:/Users/SAROJ/Desktop/House Price/submission_wona.csv")->submission
+```
+
+```{r}
+submission$SalePrice = f2
+```
+
+```{r}
+res2 = pred - f2
+```
+
+```{r}
+h2_data = data.frame(test_massaged,res2)
+```
+
+```{r}
+model2 = randomForest(res2~.,data=h2_data)
+```
+
+```{r}
+h2 = predict(model2,test_massaged)
+```
+
+```{r}
+f3 = f2+h2
+```
+
+```{r}
+submission$SalePrice = f3
+```
+
+```{r}
+write.csv(submission,"C:/Users/SAROJ/Desktop/House Price/gb3.csv",row.names = F)
+```
+
+```{r}
+res3 = pred - f3
+h3_data = data.frame(test_massaged,res3)
+model2 = randomForest(res3~.,data=h3_data)
+h3 = predict(model2,test_massaged)
+f4 = f3+h3
+submission$SalePrice = f4
+write.csv(submission,"C:/Users/SAROJ/Desktop/House Price/gb4.csv",row.names = F)
+```
+
+```{r}
+res4 = pred - f4
+h4_data = data.frame(test_massaged,res4)
+model2 = randomForest(res4~.,data=h4_data)
+h4 = predict(model2,test_massaged)
+f5 = f4+h4
+submission$SalePrice = f5
+write.csv(submission,"C:/Users/SAROJ/Desktop/House Price/gb5.csv",row.names = F)
+
+```
+
+```{r}
+res5 = pred - f5
+h5_data = data.frame(test_massaged,res5)
+model2 = randomForest(res5~.,data=h5_data)
+h5 = predict(model2,test_massaged)
+f6 = f5+h5
+submission$SalePrice = f6
+write.csv(submission,"C:/Users/SAROJ/Desktop/House Price/gb6.csv",row.names = F)
+
+```

@@ -1,0 +1,368 @@
+---
+title: "Model Training"
+author: "Abhirupa Lodh"
+date: "January 2, 2018"
+output: html_document
+---
+
+```{r}
+library(randomForest)
+library(mice)
+library(clusterSim)
+```
+
+```{r}
+read.csv("C:/Users/SAROJ/Desktop/House Price/clean_data.csv")->train
+```
+
+```{r}
+train = train[,2:59]
+```
+
+
+```{r}
+set.seed(500)
+sample(1:nrow(train),0.8*nrow(train),replace = F)->index
+```
+
+```{r}
+train_data = train[index,]
+test_data = train[-index,]
+```
+
+
+```{r}
+model1 = randomForest(SalePrice~.,data=train_data)
+```
+
+```{r}
+print(model1)
+```
+
+```{r}
+library(miscTools)
+r2 <- rSquared(test_data$SalePrice, test_data$SalePrice - predict(model1, test_data))
+```
+
+```{r}
+mse <- mean((test_data$SalePrice - predict(model1, test_data))^2)
+```
+
+```{r}
+read.csv("C:/Users/SAROJ/Desktop/House Price/test.csv")->test
+```
+
+```{r}
+rem = c("Id","Alley","PoolQC","MiscFeature","Street","Utilities","LotConfig","Condition1","Condition2","RoofMatl","BsmtFinType2","ExterCond","Heating","SaleType","BsmtHalfBath","YrSold","MoSold","BsmtFinSF2","LowQualFinSF","X3SsnPorch","ScreenPorch","PoolArea","MiscVal")
+```
+
+```{r}
+names(test) %in% rem->res
+
+vec = c()
+k=0
+for (i in 1:length(res)) {
+if(res[i]==FALSE)
+{
+    k=k+1
+  vec[k]=i
+}
+}
+```
+
+
+```{r}
+test_data = test[,vec]
+```
+
+```{r}
+summary(test_data)
+```
+
+```{r}
+colnames(test_data)
+```
+
+```{r}
+n_to_f = c("BsmtFullBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces")
+
+
+
+```
+
+
+```{r}
+as.data.frame(apply(test_data[,n_to_f],2,as.factor))->test_data[,n_to_f]
+
+```
+
+
+```{r}
+names(test_data)[sapply(test_data, is.numeric)]->n
+test_num = test_data[,n]
+names(test_data)[sapply(test_data, is.factor)]->f
+test_fac = test_data[,f]
+```
+
+
+
+```{r}
+colnames(train_fac)
+print("-------------------------")
+colnames(test_fac)
+
+```
+
+```{r}
+test_fac[,-c(21,22,23,24,25,27,29)]->test_fac
+```
+
+
+```{r}
+colnames(train_num)
+print("-------------------------")
+colnames(test_num)
+
+```
+
+
+```{r}
+names(test_data) %in% names(test_fac)->res
+
+vec = c()
+k=0
+for (i in 1:length(res)) {
+if(res[i]==FALSE)
+{
+    k=k+1
+  vec[k]=i
+}
+}
+```
+
+```{r}
+test_num = test_data[,vec]
+```
+
+```{r}
+as.character(test_fac$BsmtQual)->test_fac$BsmtQual
+as.character(test_fac$BsmtCond)->test_fac$BsmtCond
+as.character(test_fac$BsmtExposure)->test_fac$BsmtExposure
+as.character(test_fac$BsmtFinType1)->test_fac$BsmtFinType1
+
+
+test_fac$BsmtQual[is.na(test_fac$BsmtQual)]="No Basement"
+test_fac$BsmtCond[is.na(test_fac$BsmtCond)]="No Basement"
+test_fac$BsmtExposure[is.na(test_fac$BsmtExposure)]="No Basement"
+test_fac$BsmtFinType1[is.na(test_fac$BsmtFinType1)]="No Basement"
+
+
+as.factor(test_fac$BsmtQual)->test_fac$BsmtQual
+as.factor(test_fac$BsmtCond)->test_fac$BsmtCond
+as.factor(test_fac$BsmtExposure)->test_fac$BsmtExposure
+as.factor(test_fac$BsmtFinType1)->test_fac$BsmtFinType1
+
+
+```
+
+```{r}
+
+as.character(test_fac$GarageCond)->test_fac$GarageCond
+as.character(test_fac$GarageQual)->test_fac$GarageQual
+as.character(test_fac$GarageFinish)->test_fac$GarageFinish
+as.character(test_fac$GarageType)->test_fac$GarageType
+
+
+test_fac$GarageQual[is.na(test_fac$GarageQual)]="No Garage"
+test_fac$GarageCond[is.na(test_fac$GarageCond)]="No Garage"
+test_fac$GarageFinish[is.na(test_fac$GarageFinish)]="No Garage"
+test_fac$GarageType[is.na(test_fac$GarageType)]="No Garage"
+
+
+as.factor(test_fac$GarageQual)->test_fac$GarageQual
+as.factor(test_fac$GarageCond)->test_fac$GarageCond
+as.factor(test_fac$GarageFinish)->test_fac$GarageFinish
+as.factor(test_fac$GarageType)->test_fac$GarageType
+```
+
+```{r}
+as.character(test_fac$Fence)->test_fac$Fence
+test_fac$Fence[is.na(test_fac$Fence)]="No Fence"
+as.factor(test_fac$Fence)->test_fac$Fence
+as.character(test_fac$FireplaceQu)->test_fac$FireplaceQu
+test_fac$FireplaceQu[is.na(test_fac$FireplaceQu)]="No Fireplace"
+as.factor(test_fac$FireplaceQu)->test_fac$FireplaceQu
+```
+
+```{r}
+summary(test_fac)
+```
+
+#Imputation 
+
+
+```{r}
+mice(data = test_fac[,c(1,9,10,11,20,21,22)], m = 2, method = "polyreg", maxit = 2, seed = 500)->imputed_f
+```
+
+```{r}
+data.frame(test_fac[,-c(1,9,10,11,20,21,22)],complete(imputed_f,2))->test_fac_imp
+```
+
+```{r}
+summary(test_fac_imp)
+```
+
+```{r}
+mice(data = test_num, m = 2, method = "pmm", maxit = 5, seed = 500)->imputed_n
+```
+
+```{r}
+test_num = complete(imputed_n,2)
+```
+
+```{r}
+summary(test_num)
+```
+
+```{r}
+as.factor(test_num$MSSubClass)->test_num$MSSubClass
+as.factor(test_num$OverallQual)->test_num$OverallQual
+as.factor(test_num$OverallCond)->test_num$OverallCond
+```
+
+```{r}
+
+data.Normalization(test_num$BsmtFinSF1,type = "n1",normalization="column")->test_num$BsmtFinSF1
+
+data.Normalization(test_num$TotalBsmtSF,type = "n1",normalization="column")->test_num$TotalBsmtSF
+
+data.Normalization(test_num$X1stFlrSF,type = "n1",normalization="column")->test_num$X1stFlrSF
+
+data.Normalization(test_num$GrLivArea,type = "n1",normalization="column")->test_num$GrLivArea
+
+data.Normalization(test_num$OpenPorchSF,type = "n1",normalization="column")->test_num$OpenPorchSF
+
+data.Normalization(test_num$WoodDeckSF,type = "n1",normalization="column")->test_num$WoodDeckSF
+
+data.Normalization(test_num$BsmtUnfSF,type = "n1",normalization="column")->test_num$BsmtUnfSF
+
+data.Normalization(test_num$X2ndFlrSF,type = "n1",normalization="column")->test_num$X2ndFlrSF
+
+data.Normalization(test_num$LotFrontage,type = "n1",normalization="column")->test_num$LotFrontage
+
+data.Normalization(test_num$MasVnrArea,type = "n1",normalization="column")->test_num$MasVnrArea
+
+data.Normalization(test_num$GarageArea,type = "n1",normalization="column")->test_num$GarageArea
+
+data.Normalization(test_data$GarageCars,type = "n1",normalization="column")->test_num$GarageCars
+```
+
+
+```{r}
+
+
+
+data.Normalization(test_num$EnclosedPorch,type ="n5",normalization="column")->test_num$EnclosedPorch
+
+
+
+data.Normalization(test_num$LotArea,type = "n5",normalization="column")->test_num$LotArea
+
+
+
+
+```
+
+```{r}
+data.frame(test_fac_imp,test_num)->test_massaged
+summary(test_massaged)
+```
+
+```{r}
+str(train)
+
+print("=================================")
+
+str(test_massaged)
+```
+
+```{r}
+as.numeric(test_massaged$MSSubClass)->test_massaged$MSSubClass
+```
+
+```{r}
+levels(test_massaged$GarageQual) <- levels(train$GarageQual)
+levels(test_massaged$Electrical) <- levels(train$Electrical)
+levels(test_massaged$Exterior1st) <- levels(train$Exterior1st)
+levels(test_massaged$Exterior2nd) <- levels(train$Exterior2nd)
+levels(test_massaged$HouseStyle) <- levels(train$HouseStyle)
+```
+
+```{r}
+
+as.integer(test_massaged$BsmtFullBath)->test_massaged$BsmtFullBath
+as.integer(test_massaged$OverallCond)->test_massaged$OverallCond
+as.integer(test_massaged$OverallQual)->test_massaged$OverallQual
+as.integer(test_massaged$TotRmsAbvGrd)->test_massaged$TotRmsAbvGrd
+as.integer(test_massaged$Fireplaces)->test_massaged$Fireplaces
+as.integer(test_massaged$KitchenAbvGr)->test_massaged$KitchenAbvGr
+as.integer(test_massaged$BedroomAbvGr)->test_massaged$BedroomAbvGr
+as.integer(test_massaged$HalfBath)->test_massaged$HalfBath
+as.integer(test_massaged$FullBath)->test_massaged$FullBath
+```
+
+```{r}
+model1 = randomForest(SalePrice~.,data=train)
+```
+
+```{r}
+pred = predict(model1,test_massaged)
+```
+
+```{r}
+data.frame(test$Id,pred)->results
+```
+
+```{r}
+write.csv(results,"C:/Users/SAROJ/Desktop/House Price/crude_results_rf.csv",row.names = F)
+```
+
+
+```{r}
+results1 = results
+```
+
+```{r}
+results1$pred[is.na(results1$pred)]=mean(results1$pred,na.rm = T)
+summary(results1)
+summary(results)
+```
+
+```{r}
+write.csv(results1,"C:/Users/SAROJ/Desktop/House Price/submission_wona.csv",row.names = F)
+```
+
+#Clean Up 
+
+```{r}
+rm(imputed_f)
+rm(imputed_n)
+rm(test_fac)
+rm(test_fac_imp)
+rm(test_num)
+rm(f)
+rm(i)
+rm(k)
+rm(n)
+rm(n_to_f)
+rm(pred)
+rm(rem)
+rm(res)
+rm(vec)
+```
+
+```{r}
+write.csv(test_massaged,"C:/Users/SAROJ/Desktop/House Price/test_massaged.csv",row.names = F)
+```
+

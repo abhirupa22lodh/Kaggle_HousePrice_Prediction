@@ -1,0 +1,363 @@
+---
+title: "House Price Data"
+output: html_document
+---
+
+```{r}
+train <- read.csv("C:/Users/SAROJ/Desktop/House Price/train.csv")
+```
+
+#Separating the factors and the numeric columns
+
+```{r}
+names(train)[sapply(train, is.numeric)]->n
+train_num = train[,n]
+names(train)[sapply(train, is.factor)]->f
+train_fac = train[,f]
+names(train_num)
+```
+
+#Features to be converted to factors
+
+```{r}
+n_to_f = c("BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","MoSold","YrSold")
+```
+
+```{r}
+train_fac_2 = train_num[,n_to_f]
+```
+
+```{r}
+apply(train_fac_2,2,as.factor)->a
+as.data.frame(a)->b
+```
+
+```{r}
+factors = data.frame(train_fac,b)
+```
+
+
+
+#Way too many NAs
+
+```{r}
+#remove alley,pool quality,MiscFeature
+factors[,-c(3,39,41)]->factors
+```
+
+#Feature Correction
+
+```{r}
+as.character(factors$BsmtQual)->factors$BsmtQual
+as.character(factors$BsmtCond)->factors$BsmtCond
+as.character(factors$BsmtExposure)->factors$BsmtExposure
+as.character(factors$BsmtFinType1)->factors$BsmtFinType1
+as.character(factors$BsmtFinType2)->factors$BsmtFinType2
+
+factors$BsmtQual[is.na(factors$BsmtQual)]="No Basement"
+factors$BsmtCond[is.na(factors$BsmtCond)]="No Basement"
+factors$BsmtExposure[is.na(factors$BsmtExposure)]="No Basement"
+factors$BsmtFinType1[is.na(factors$BsmtFinType1)]="No Basement"
+factors$BsmtFinType2[is.na(factors$BsmtFinType2)]="No Basement"
+
+as.factor(factors$BsmtQual)->factors$BsmtQual
+as.factor(factors$BsmtCond)->factors$BsmtCond
+as.factor(factors$BsmtExposure)->factors$BsmtExposure
+as.factor(factors$BsmtFinType1)->factors$BsmtFinType1
+as.factor(factors$BsmtFinType2)->factors$BsmtFinType2
+
+```
+
+```{r}
+
+as.character(factors$GarageCond)->factors$GarageCond
+as.character(factors$GarageQual)->factors$GarageQual
+as.character(factors$GarageFinish)->factors$GarageFinish
+as.character(factors$GarageType)->factors$GarageType
+
+
+factors$GarageQual[is.na(factors$GarageQual)]="No Garage"
+factors$GarageCond[is.na(factors$GarageCond)]="No Garage"
+factors$GarageFinish[is.na(factors$GarageFinish)]="No Garage"
+factors$GarageType[is.na(factors$GarageType)]="No Garage"
+
+
+as.factor(factors$GarageQual)->factors$GarageQual
+as.factor(factors$GarageCond)->factors$GarageCond
+as.factor(factors$GarageFinish)->factors$GarageFinish
+as.factor(factors$GarageType)->factors$GarageType
+```
+
+```{r}
+as.character(factors$Fence)->factors$Fence
+factors$Fence[is.na(factors$Fence)]="No Fence"
+as.factor(factors$Fence)->factors$Fence
+as.character(factors$FireplaceQu)->factors$FireplaceQu
+factors$FireplaceQu[is.na(factors$FireplaceQu)]="No Fireplace"
+as.factor(factors$FireplaceQu)->factors$FireplaceQu
+```
+
+```{r}
+
+summary(factors)
+```
+
+#Data Imputation
+
+```{r}
+mice(data = factors, m = 2, method = "polyreg", maxit = 3, seed = 500)->imputed_f
+```
+
+```{r}
+factors=complete(imputed_f,2)
+
+```
+
+```{r}
+summary(factors)
+```
+
+#Numeric Attributes
+
+```{r}
+names(train) %in% names(factors)->res
+```
+
+```{r}
+vec = c()
+k=1
+for (i in 1:length(res)) {
+if(res[i]==FALSE)
+{
+  vec[k]=i
+  k=k+1
+}
+}
+```
+
+```{r}
+train_num = train[,vec]
+```
+
+```{r}
+colnames(train_num)
+```
+
+```{r}
+#remove alley,pool quality,MiscFeature
+train_num[,-c(5,28,29)]->train_num
+```
+
+```{r}
+
+```
+```{r}
+mice(data = train_num, m = 2, method = "pmm", maxit = 5, seed = 500)->imputed_n
+```
+```{r}
+train_num=complete(imputed_n,2)
+```
+
+```{r}
+#Remove ID column
+train_num = train_num[,-1]
+```
+
+
+maybe : 
+BsmtFinSF1:
+TotalBsmtSF:
+1stFlrSF: 
+GrLivArea:
+OpenPorchSF:    
+
+
+non:
+BsmtFinSF2: 
+LowQualFinSF:
+EnclosedPorch: 
+3SsnPorch: 
+ScreenPorch: 
+PoolArea: 
+
+
+normal : 
+BsmtUnfSF: 
+2ndFlrSF: 
+WoodDeckSF: **
+
+    
+   
+
+```{r}
+hist(train_num$BsmtFinSF1)
+hist(train_num$TotalBsmtSF)
+hist(train_num$X1stFlrSF)
+hist(train_num$GrLivArea)
+hist(train_num$OpenPorchSF)
+hist(train_num$WoodDeckSF)
+```
+
+```{r}
+kurtosis(train_num$BsmtFinSF1)
+kurtosis(train_num$TotalBsmtSF)
+kurtosis(train_num$X1stFlrSF)
+kurtosis(train_num$GrLivArea)
+kurtosis(train_num$OpenPorchSF)
+```
+
+
+```{r}
+skewness(train_num$BsmtFinSF1)
+skewness(train_num$TotalBsmtSF)
+skewness(train_num$X1stFlrSF)
+skewness(train_num$GrLivArea)
+skewness(train_num$OpenPorchSF)
+skewness(train_num$WoodDeckSF)
+```
+#Standardizing Normally Distributed Columns
+
+```{r}
+library(standardize)
+library(clusterSim)
+```
+
+```{r}
+data.Normalization(train_num$BsmtFinSF1,type = "n1",normalization="column")->train_num$BsmtFinSF1
+
+data.Normalization(train_num$TotalBsmtSF,type = "n1",normalization="column")->train_num$TotalBsmtSF
+
+data.Normalization(train_num$X1stFlrSF,type = "n1",normalization="column")->train_num$X1stFlrSF
+
+data.Normalization(train_num$GrLivArea,type = "n1",normalization="column")->train_num$GrLivArea
+
+data.Normalization(train_num$OpenPorchSF,type = "n1",normalization="column")->train_num$OpenPorchSF
+
+data.Normalization(train_num$WoodDeckSF,type = "n1",normalization="column")->train_num$WoodDeckSF
+
+data.Normalization(train_num$BsmtUnfSF,type = "n1",normalization="column")->train_num$BsmtUnfSF
+
+data.Normalization(train_num$X2ndFlrSF,type = "n1",normalization="column")->train_num$X2ndFlrSF
+
+data.Normalization(train_num$LotFrontage,type = "n1",normalization="column")->train_num$LotFrontage
+
+data.Normalization(train_num$MasVnrArea,type = "n1",normalization="column")->train_num$MasVnrArea
+
+data.Normalization(train_num$GarageArea,type = "n1",normalization="column")->train_num$GarageArea
+
+data.Normalization(train$GarageCars,type = "n1",normalization="column")->train_num$GarageCars
+
+
+
+```
+
+non:
+BsmtFinSF2: 
+LowQualFinSF:
+EnclosedPorch: 
+3SsnPorch: 
+ScreenPorch: 
+PoolArea: 
+
+```{r}
+data.Normalization(train_num$BsmtFinSF2,type = "n5",normalization="column")->train_num$BsmtFinSF2
+
+data.Normalization(train_num$LowQualFinSF,type = "n5",normalization="column")->train_num$LowQualFinSF
+
+data.Normalization(train_num$EnclosedPorch,type = "n5",normalization="column")->train_num$EnclosedPorch
+
+data.Normalization(train_num$X3SsnPorch,type = "n5",normalization="column")->train_num$X3SsnPorch
+
+data.Normalization(train_num$ScreenPorch,type = "n5",normalization="column")->train_num$ScreenPorch
+
+data.Normalization(train_num$PoolArea,type = "n5",normalization="column")->train_num$PoolArea
+
+data.Normalization(train_num$LotArea,type = "n5",normalization="column")->train_num$LotArea
+
+data.Normalization(train_num$MiscVal,type = "n5",normalization="column")->train_num$MiscVal
+
+
+
+```
+
+```{r}
+colnames(train_num)
+```
+
+```{r}
+#Normalizing and Standardizing the data
+sd(train_num$GarageCars)
+skewness(train_num$GarageCars)
+kurtosis(train_num$GarageCars)
+
+```
+
+```{r}
+as.factor(train_num$MSSubClass)->train_num$MSSubClass
+as.factor(train_num$OverallQual)->train_num$OverallQual
+as.factor(train_num$OverallCond)->train_num$OverallCond
+```
+
+```{r}
+data.frame(factors,train_num)->massaged_data
+```
+
+```{r}
+set.seed(123)
+boruta.train <- Boruta(SalePrice~., data = massaged_data, doTrace = 2,maxRuns=100)
+```
+
+```{r}
+boruta.train$finalDecision
+```
+
+###Attributes to be deleted
+
+Street
+Utilities
+LotConfig
+Condition1
+Condition2
+RoofMatl
+BsmtFinType2
+ExterCond
+Heating
+SaleType
+BsmtHalfBath
+YrSold
+MoSold
+BsmtFinSF2
+LowQualFinSF
+X3SsnPorch
+ScreenPorch
+PoolArea
+MiscVal
+
+```{r}
+rem = c("Street","Utilities","LotConfig","Condition1","Condition2","RoofMatl","BsmtFinType2","ExterCond","Heating","SaleType","BsmtHalfBath","YrSold","MoSold","BsmtFinSF2","LowQualFinSF","X3SsnPorch","ScreenPorch","PoolArea","MiscVal")
+```
+
+```{r}
+
+names(massaged_data) %in% rem->res
+
+vec = c()
+k=0
+for (i in 1:length(res)) {
+if(res[i]==FALSE)
+{
+    k=k+1
+  vec[k]=i
+}
+}
+```
+
+```{r}
+data = massaged_data[,vec]
+```
+
+```{r}
+write.csv(data,"C:/Users/SAROJ/Desktop/House Price/clean_data.csv",row.names = F)
+```
+
+
